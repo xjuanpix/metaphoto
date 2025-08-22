@@ -5,33 +5,36 @@ on:
     branches: [ main ]
 
 jobs:
-  test-and-deploy:
-    runs-on: [self-hosted]
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Deploy
+      - name: Setup SSH
         run: |
-          sudo mkdir -p /var/www/metaphoto
-          sudo cp -r . /var/www/metaphoto/
-          sudo chown -R $USER:$USER /var/www/metaphoto
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-          cd /var/www/metaphoto
-
-          cd metaphoto-api
-          npm install
-          npm run build
-          cd ..
-
-          cd metaphoto-frontend
-          npm install
-          npm run build
-          cd ..
-
-          docker-compose -f docker-compose.prod.yml up -d --build
+      - name: Deploy to server
+        run: |
+          tar --exclude='.git' --exclude='node_modules' --exclude='.next' -czf deploy.tar.gz .
+          scp deploy.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/metaphoto/
+          
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            cd /var/www/metaphoto &&
+            tar -xzf deploy.tar.gz &&
+            rm deploy.tar.gz &&
+          
+            cd metaphoto-api &&
+            npm install &&
+            npm run build &&
+            cd ../metaphoto-frontend &&
+            npm install &&
+            npm run build &&
+            cd .. &&
+            docker-compose -f docker-compose.prod.yml up -d --build
+          '
