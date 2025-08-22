@@ -1,0 +1,37 @@
+name: Deploy MetaPhoto
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Deploy
+        run: |
+          sudo mkdir -p /var/www/metaphoto
+          sudo cp -r . /var/www/metaphoto/
+          sudo chown -R $USER:$USER /var/www/metaphoto
+
+          cd /var/www/metaphoto
+
+          cd metaphoto-api
+          npm install
+          npm run build
+          cd ..
+
+          cd metaphoto-frontend
+          npm install
+          npm run build
+          cd ..
+
+          docker-compose -f docker-compose.prod.yml up -d --build
