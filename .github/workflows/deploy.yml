@@ -21,12 +21,23 @@ jobs:
 
       - name: Deploy to server
         run: |
-          tar --exclude='.git' --exclude='node_modules' --exclude='.next' --exclude='.github' -czf deploy.tar.gz .
+          # Create clean deployment directory
+          mkdir -p deploy
+
+          # Copy only what we need (exclude problematic directories)
+          cp -r metaphoto-api deploy/
+          cp -r metaphoto-frontend deploy/
+          cp docker-compose.prod.yml deploy/
+          cp -r .github deploy/ 2>/dev/null || true
+
+          # Create archive from clean directory
+          tar -czf deploy.tar.gz -C deploy .
+
+          # Deploy
           scp deploy.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/metaphoto/
 
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
             cd /var/www/metaphoto &&
-            rm -rf metaphoto-api metaphoto-frontend docker-compose.prod.yml &&
             tar -xzf deploy.tar.gz &&
             rm deploy.tar.gz &&
 
