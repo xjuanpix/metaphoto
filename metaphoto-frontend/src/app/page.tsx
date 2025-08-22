@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useRef, useState} from 'react'
+import {Suspense, useEffect, useRef, useState} from 'react'
 import { api } from '@/lib/api'
 import PhotoFilters from '@/components/PhotoFilters'
 import {PhotoModel, PhotoFiltersModel} from "@/types";
@@ -8,7 +8,7 @@ import PhotoPagination from "@/components/PhotoPagination";
 import {useRouter, useSearchParams} from "next/navigation";
 import Link from "next/link";
 
-export default function Home() {
+function HomePage() {
   const [photos, setPhotos] = useState<PhotoModel[]>([])
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState<PhotoFiltersModel>({ limit: 25, offset: 0 })
@@ -174,5 +174,13 @@ export default function Home() {
         }}
       />
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading...</div>}>
+      <HomePage />
+    </Suspense>
   )
 }
