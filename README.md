@@ -22,3 +22,7 @@ npm run dev
 
 - Backend: http://localhost:3001
 - Frontend: http://localhost:3000
+
+## Notes
+
+Please note that the API is using placeholder.com which no longer seems to be hosting these images.
