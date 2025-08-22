@@ -21,14 +21,15 @@ jobs:
 
       - name: Deploy to server
         run: |
-          tar --exclude='.git' --exclude='node_modules' --exclude='.next' -czf deploy.tar.gz .
+          tar --exclude='.git' --exclude='node_modules' --exclude='.next' --exclude='.github' -czf deploy.tar.gz .
           scp deploy.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/metaphoto/
-          
+
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
             cd /var/www/metaphoto &&
+            rm -rf metaphoto-api metaphoto-frontend docker-compose.prod.yml &&
             tar -xzf deploy.tar.gz &&
             rm deploy.tar.gz &&
-          
+
             cd metaphoto-api &&
             npm install &&
             npm run build &&
